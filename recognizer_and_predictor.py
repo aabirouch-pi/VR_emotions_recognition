@@ -13,6 +13,7 @@ import speech_recognition as sr
 import os 
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
+from insights import word_counting, speed_of_talk, NER
 
 
 # create a speech recognition object
@@ -20,7 +21,7 @@ r = sr.Recognizer()
 
 # a function that splits the audio file into chunks
 # and applies speech recognition
-def get_large_audio_transcription(path, chunks_folder, lang):
+def get_large_audio_transcription(path, chunks_folder, lang, duration, nlp_lang):
     st.write("Predictions started")
     """
     Splitting the large audio file into chunks
@@ -35,7 +36,7 @@ def get_large_audio_transcription(path, chunks_folder, lang):
         # adjust this per requirement
         silence_thresh = sound.dBFS-14,
         # keep the silence for 1 second, adjustable as well
-        keep_silence=500)
+        keep_silence=1000)
 
 
     folder_name = chunks_folder
@@ -69,7 +70,7 @@ def get_large_audio_transcription(path, chunks_folder, lang):
                 st.write("**What you said is: **", text)
                 # sheet_file["Text"][i-1] = str(text)
 
-                nlp = spacy.load('en_core_web_sm')
+                nlp = spacy.load(nlp_lang)
                 nlp.add_pipe('spacytextblob')
                 doc = nlp(text)
                 impression = doc._.polarity
@@ -95,8 +96,16 @@ def get_large_audio_transcription(path, chunks_folder, lang):
     sheet_file.to_csv(chunks_folder + "results.csv")
     stat_percent = [imp_stat / sum(stat) for imp_stat in stat]
     st.write("**The result of the whole record**")
-    st.write("**You've been **", stat_percent[0], " % Positive")
-    st.write("**You've been **", stat_percent[1], " % Inddiffrent")
-    st.write("**You've been **", stat_percent[2], " % Negative")
+    # Emotions
+    st.write("**You've been **", stat_percent[0]*100, " % Positive")
+    st.write("**You've been **", stat_percent[1]*100, " % Neutral")
+    st.write("**You've been **", stat_percent[2]*100, " % Negative")
+    # Word Counting
+    st.write(word_counting(whole_text))
+    # # Speed of Talk
+    st.write(speed_of_talk(whole_text, duration))
+    if lang not in ["fr-FR", "en-US", "it-IT"]:
+        st.write(NER(whole_text, nlp_lang))
+
     # return the text for all chunks detected
-    return whole_text
+    # return NER(whole_text)

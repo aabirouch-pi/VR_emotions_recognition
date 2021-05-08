@@ -11,7 +11,7 @@ import os
 from spacytextblob.spacytextblob import SpacyTextBlob
 from recorder import record
 from recognizer_and_predictor import get_large_audio_transcription
-
+from insights import audio_duration
 
 
 
@@ -48,15 +48,16 @@ if st.button("Start Recording"):
     record(duration, chunks_folder)
 
     # Start prediction:
-    get_large_audio_transcription(recoded_file, chunks_folder, language)
+    get_large_audio_transcription(recoded_file, chunks_folder, language, duration)
 
 file_bytes = st.file_uploader("Upload a file", type=("wav"))
 if st.button("Process Uploaded File"):
     root = "./results/"
     chunks_folder = root + first_name + "_" + second_name + "_" + location +"/"
     recoded_file = file_bytes
+    audio_duration = audio_duration(recoded_file)
     os.mkdir(chunks_folder)
 
 
     # Start prediction:
-    get_large_audio_transcription(recoded_file, chunks_folder, language)
+    get_large_audio_transcription(recoded_file, chunks_folder, language, audio_duration, "fr_core_news_sm")
